@@ -1,0 +1,36 @@
+version: "3"
+services:
+  postgresql:
+    image: postgres:latest
+    container_name: postgresql
+    volumes:
+      - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  scribe:
+    build: .
+    container_name: scribe
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: go run cmd/scribe/main.go
+    depends_on:
+      - redis
+      - postgresql
+    ports:
+      - "8080:8080"
+
+volumes:
+  redis_data:
